@@ -1,10 +1,7 @@
-/**
- * Created by BG200040 on 2016/6/17.
- */
 const React = require('react');
 const Gesture = require('./gesture.js');
 
-class Carousel extends React.Component {
+class Banner extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -46,7 +43,6 @@ class Carousel extends React.Component {
 
     componentWillUnmount() {
         document.removeEventListener('resize', this.resizeWidth.bind(this), false);
-        document.removeEventListener(`${_prefix.toLowerCase() + (_prefix ? "T" : "t")}ransitionEnd`, this._transitionEnd.bind(this), false);
     }
 
     _prefixStyle(style) {
@@ -79,6 +75,11 @@ class Carousel extends React.Component {
         this.time = setInterval(() => {
             this.setState(old => {
                 old.checked++;
+                if (old.checked < -1) {
+                    old.checked = -1
+                } else if (old.checked > this.props.data.length) {
+                    old.checked = this.props.data.length
+                }
                 old.duration = 300;
                 return old
             })
@@ -86,7 +87,7 @@ class Carousel extends React.Component {
     }
 
     handleSwipeMove(i, e) {
-        if (this.time) window.clearInterval(this.time);
+        this.handleStop();
         let index = e.direction.toLocaleLowerCase() === 'right' ? i - 1 : i + 1;
         let length = this.props.data.length;
         if (index < -1) {
@@ -98,7 +99,20 @@ class Carousel extends React.Component {
             old.checked = index;
             old.duration = 300;
             return old;
-        }, this.bannerRun.bind(this))
+        })
+    }
+
+    handleStop() {
+        if (this.time) {
+            window.clearInterval(this.time);
+            this.time = null;
+        }
+    }
+
+    handleSwipeEnd() {
+        if (!this.time) {
+            this.bannerRun();
+        }
     }
 
     render() {
@@ -115,6 +129,8 @@ class Carousel extends React.Component {
                     {cloned &&
                     <Gesture
                         key="clonel" preventDefault={false}
+                        onSwipeStart={this.handleStop.bind(this)}
+                        onSwipeEnd={this.handleSwipeEnd.bind(this)}
                         onSwipeLeft={this.handleSwipeMove.bind(this, -1)}
                         onSwipeRight={this.handleSwipeMove.bind(this, -1)}
                     >
@@ -126,6 +142,8 @@ class Carousel extends React.Component {
                         return (
                             <Gesture
                                 key={index} preventDefault={false}
+                                onSwipeStart={this.handleStop.bind(this)}
+                                onSwipeEnd={this.handleSwipeEnd.bind(this)}
                                 onSwipeLeft={cloned ? this.handleSwipeMove.bind(this, index) : null}
                                 onSwipeRight={cloned ? this.handleSwipeMove.bind(this, index) : null}
                             >
@@ -138,6 +156,8 @@ class Carousel extends React.Component {
                     {cloned &&
                     <Gesture
                         key="clone" preventDefault={false}
+                        onSwipeStart={this.handleStop.bind(this)}
+                        onSwipeEnd={this.handleSwipeEnd.bind(this)}
                         onSwipeLeft={this.handleSwipeMove.bind(this, length)}
                         onSwipeRight={this.handleSwipeMove.bind(this, length)}
                     >
@@ -161,7 +181,7 @@ class Carousel extends React.Component {
     }
 }
 
-module.exports = Carousel;
+module.exports = Banner;
 
 Banner.defaultProps = {
     data: []
